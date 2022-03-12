@@ -403,7 +403,7 @@ Readability.prototype = {
     return [].concat.apply(
       [],
       tagNames.map(function (tag) {
-        var collection = node.getElementsByTagName(tag);
+        var collection = node.querySelectorAll(tag);
         return Array.isArray(collection) ? collection : Array.from(collection);
       })
     );
@@ -573,9 +573,7 @@ Readability.prototype = {
 
       // If they had an element with id "title" in their HTML
       if (typeof curTitle !== "string")
-        curTitle = origTitle = this._getInnerText(
-          doc.getElementsByTagName("title")[0]
-        );
+        curTitle = origTitle = this._getInnerText(doc.querySelector("title"));
     } catch (e) {
       /* ignore exceptions setting the title. */
     }
@@ -598,8 +596,8 @@ Readability.prototype = {
       // Check if we have an heading containing this exact string, so we
       // could assume it's the full title.
       var headings = this._concatNodeLists(
-        doc.getElementsByTagName("h1"),
-        doc.getElementsByTagName("h2")
+        doc.querySelectorAll("h1"),
+        doc.querySelectorAll("h2")
       );
       var trimmedTitle = curTitle.trim();
       var match = this._someNode(headings, function (heading) {
@@ -620,7 +618,7 @@ Readability.prototype = {
         }
       }
     } else if (curTitle.length > 150 || curTitle.length < 15) {
-      var hOnes = doc.getElementsByTagName("h1");
+      var hOnes = doc.querySelectorAll("h1");
 
       if (hOnes.length === 1) curTitle = this._getInnerText(hOnes[0]);
     }
@@ -832,12 +830,12 @@ Readability.prototype = {
     this._removeNodes(
       this._getAllNodesWithTag(articleContent, ["p"]),
       function (paragraph) {
-        var imgCount = paragraph.getElementsByTagName("img").length;
-        var embedCount = paragraph.getElementsByTagName("embed").length;
-        var objectCount = paragraph.getElementsByTagName("object").length;
+        var imgCount = paragraph.querySelectorAll("img").length;
+        var embedCount = paragraph.querySelectorAll("embed").length;
+        var objectCount = paragraph.querySelectorAll("object").length;
         // At this point, nasty iframes have been removed, only remain embedded video ones.
-        var iframeCount = paragraph.getElementsByTagName("iframe").length;
-        var codeCount = paragraph.getElementsByTagName("code").length;
+        var iframeCount = paragraph.querySelectorAll("iframe").length;
+        var codeCount = paragraph.querySelectorAll("code").length;
         var totalCount =
           imgCount + embedCount + objectCount + iframeCount + codeCount;
 
@@ -1718,7 +1716,7 @@ Readability.prototype = {
   _getArticleMetadata: function (jsonld) {
     var metadata = {};
     var values = {};
-    var metaElements = this._doc.getElementsByTagName("meta");
+    var metaElements = this._doc.querySelectorAll("meta");
 
     // property is a space-separated list of values
     var propertyPattern =
@@ -1853,7 +1851,7 @@ Readability.prototype = {
   _unwrapNoscriptImages: function (doc) {
     // Find img without source or attributes that might contains image, and remove it.
     // This is done to prevent a placeholder img is replaced by img from noscript in next step.
-    var imgs = Array.from(doc.getElementsByTagName("img"));
+    var imgs = Array.from(doc.querySelectorAll("img"));
     this._forEachNode(imgs, function (img) {
       for (var i = 0; i < img.attributes.length; i++) {
         var attr = img.attributes[i];
@@ -1874,7 +1872,7 @@ Readability.prototype = {
     });
 
     // Next find noscript and try to extract its image
-    var noscripts = Array.from(doc.getElementsByTagName("noscript"));
+    var noscripts = Array.from(doc.querySelectorAll("noscript"));
     this._forEachNode(noscripts, function (noscript) {
       // Parse content of noscript and make sure it only contains image
       var tmp = doc.createElement("div");
@@ -1890,10 +1888,10 @@ Readability.prototype = {
       if (prevElement && this._isSingleImage(prevElement)) {
         var prevImg = prevElement;
         if (prevImg.tagName !== "IMG") {
-          prevImg = prevElement.getElementsByTagName("img")[0];
+          prevImg = prevElement.querySelector("img");
         }
 
-        var newImg = tmp.getElementsByTagName("img")[0];
+        var newImg = tmp.querySelector("img");
         for (var i = 0; i < prevImg.attributes.length; i++) {
           var attr = prevImg.attributes[i];
           if (attr.value === "") {
@@ -1969,8 +1967,8 @@ Readability.prototype = {
       node.textContent.trim().length == 0 &&
       (node.children.length == 0 ||
         node.children.length ==
-          node.getElementsByTagName("br").length +
-            node.getElementsByTagName("hr").length)
+          node.querySelectorAll("br").length +
+            node.querySelectorAll("hr").length)
     );
   },
 
@@ -2083,7 +2081,7 @@ Readability.prototype = {
     var linkLength = 0;
 
     // XXX implement _reduceNodeList?
-    this._forEachNode(element.getElementsByTagName("a"), function (linkNode) {
+    this._forEachNode(element.querySelectorAll("a"), function (linkNode) {
       var href = linkNode.getAttribute("href");
       var coefficient = href && this.REGEXPS.hashUrl.test(href) ? 0.3 : 1;
       linkLength += this._getInnerText(linkNode).length * coefficient;
@@ -2187,7 +2185,7 @@ Readability.prototype = {
   _getRowAndColumnCount: function (table) {
     var rows = 0;
     var columns = 0;
-    var trs = table.getElementsByTagName("tr");
+    var trs = table.querySelectorAll("tr");
     for (var i = 0; i < trs.length; i++) {
       var rowspan = trs[i].getAttribute("rowspan") || 0;
       if (rowspan) {
@@ -2197,7 +2195,7 @@ Readability.prototype = {
 
       // Now look for column-related info
       var columnsInThisRow = 0;
-      var cells = trs[i].getElementsByTagName("td");
+      var cells = trs[i].querySelectorAll("td");
       for (var j = 0; j < cells.length; j++) {
         var colspan = cells[j].getAttribute("colspan") || 0;
         if (colspan) {
@@ -2216,7 +2214,7 @@ Readability.prototype = {
    * https://searchfox.org/mozilla-central/rev/f82d5c549f046cb64ce5602bfd894b7ae807c8f8/accessible/generic/TableAccessible.cpp#19
    */
   _markDataTables: function (root) {
-    var tables = root.getElementsByTagName("table");
+    var tables = root.querySelectorAll("table");
     for (var i = 0; i < tables.length; i++) {
       var table = tables[i];
       var role = table.getAttribute("role");
@@ -2235,7 +2233,7 @@ Readability.prototype = {
         continue;
       }
 
-      var caption = table.getElementsByTagName("caption")[0];
+      var caption = table.querySelector("caption");
       if (caption && caption.childNodes.length > 0) {
         table._readabilityDataTable = true;
         continue;
@@ -2244,7 +2242,7 @@ Readability.prototype = {
       // If the table has a descendant with any of these tags, consider a data table:
       var dataTableDescendants = ["col", "colgroup", "tfoot", "thead", "th"];
       var descendantExists = function (tag) {
-        return !!table.getElementsByTagName(tag)[0];
+        return !!table.querySelector(tag);
       };
       if (dataTableDescendants.some(descendantExists)) {
         this.log("Data table because found data-y descendant");
@@ -2253,7 +2251,7 @@ Readability.prototype = {
       }
 
       // Nested tables indicate a layout table:
-      if (table.getElementsByTagName("table")[0]) {
+      if (table.querySelector("table")) {
         table._readabilityDataTable = false;
         continue;
       }
@@ -2423,10 +2421,10 @@ Readability.prototype = {
         // If there are not very many commas, and the number of
         // non-paragraph elements is more than paragraphs or other
         // ominous signs, remove the element.
-        var p = node.getElementsByTagName("p").length;
-        var img = node.getElementsByTagName("img").length;
-        var li = node.getElementsByTagName("li").length - 100;
-        var input = node.getElementsByTagName("input").length;
+        var p = node.querySelectorAll("p").length;
+        var img = node.querySelectorAll("img").length;
+        var li = node.querySelectorAll("li").length - 100;
+        var input = node.querySelectorAll("input").length;
         var headingDensity = this._getTextDensity(node, [
           "h1",
           "h2",
@@ -2573,7 +2571,7 @@ Readability.prototype = {
   parse: function () {
     // Avoid parsing too large documents, as per configuration option
     if (this._maxElemsToParse > 0) {
-      var numTags = this._doc.getElementsByTagName("*").length;
+      var numTags = this._doc.querySelectorAll("*").length;
       if (numTags > this._maxElemsToParse) {
         throw new Error(
           "Aborting parsing document; " + numTags + " elements found"
@@ -2606,7 +2604,7 @@ Readability.prototype = {
     // first paragraph as the excerpt. This is used for displaying a preview of
     // the article's content.
     if (!metadata.excerpt) {
-      var paragraphs = articleContent.getElementsByTagName("p");
+      var paragraphs = articleContent.querySelectorAll("p");
       if (paragraphs.length > 0) {
         metadata.excerpt = paragraphs[0].textContent.trim();
       }
