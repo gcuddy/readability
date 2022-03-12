@@ -1797,6 +1797,7 @@ Readability.prototype = {
       values["og:image"] ||
       values["weibo:article:image"] ||
       values["weibo:webpage:image"] ||
+      values["image_src"] ||
       values["twitter:image"];
 
     // get date
@@ -2606,10 +2607,12 @@ Readability.prototype = {
       }
     }
     if (!metadata.image) {
-      var images = articleContent.getElementsByTagName("img");
-      if (images.length > 0) {
-        metadata.image = images[0].src;
-      }
+      // TODO: the below will often result in crappy images
+      // Should use some of the techniques frmo mercury-parser in "scoring" image
+      //   var images = articleContent.getElementsByTagName("img");
+      //   if (images.length > 0) {
+      //     metadata.image = images[0].src;
+      //   }
     }
 
     var textContent = articleContent.textContent;
