@@ -1846,77 +1846,18 @@ Readability.prototype = {
    * and remove the <noscript> tag. This improves the quality of the images we use on
    * some sites (e.g. Medium).
    *
-   * @param Element
+   * @param {Document} doc — document to search
    **/
   _unwrapNoscriptImages: function (doc) {
-    // Find img without source or attributes that might contains image, and remove it.
-    // This is done to prevent a placeholder img is replaced by img from noscript in next step.
-    var imgs = Array.from(doc.querySelectorAll("img"));
-    this._forEachNode(imgs, function (img) {
-      for (var i = 0; i < img.attributes.length; i++) {
-        var attr = img.attributes[i];
-        switch (attr.name) {
-          case "src":
-          case "srcset":
-          case "data-src":
-          case "data-srcset":
-            return;
-        }
-
-        if (/\.(jpg|jpeg|png|webp)/i.test(attr.value)) {
-          return;
-        }
-      }
-
-      img.parentNode.removeChild(img);
-    });
-
-    // Next find noscript and try to extract its image
-    var noscripts = Array.from(doc.querySelectorAll("noscript"));
-    this._forEachNode(noscripts, function (noscript) {
-      // Parse content of noscript and make sure it only contains image
-      var tmp = doc.createElement("div");
-      tmp.innerHTML = noscript.innerHTML;
-      if (!this._isSingleImage(tmp)) {
-        return;
-      }
-
-      // If noscript has previous sibling and it only contains image,
-      // replace it with noscript content. However we also keep old
-      // attributes that might contains image.
-      var prevElement = noscript.previousElementSibling;
-      if (prevElement && this._isSingleImage(prevElement)) {
-        var prevImg = prevElement;
-        if (prevImg.tagName !== "IMG") {
-          prevImg = prevElement.querySelector("img");
-        }
-
-        var newImg = tmp.querySelector("img");
-        for (var i = 0; i < prevImg.attributes.length; i++) {
-          var attr = prevImg.attributes[i];
-          if (attr.value === "") {
-            continue;
-          }
-
-          if (
-            attr.name === "src" ||
-            attr.name === "srcset" ||
-            /\.(jpg|jpeg|png|webp)/i.test(attr.value)
-          ) {
-            if (newImg.getAttribute(attr.name) === attr.value) {
-              continue;
-            }
-
-            var attrName = attr.name;
-            if (newImg.hasAttribute(attrName)) {
-              attrName = "data-old-" + attrName;
-            }
-
-            newImg.setAttribute(attrName, attr.value);
-          }
-        }
-
-        noscript.parentNode.replaceChild(tmp.firstElementChild, prevElement);
+    // Find noscript and try to extract its image
+    const noscripts = Array.from(doc.querySelectorAll("noscript"));
+    noscripts.forEach((noscript) => {
+      const img = noscript.querySelector("img:only-child");
+      if (!img) return;
+      const prev = noscript.previousElementSibling;
+      if (prev && prev.tagName === "IMG") {
+        prev.replaceWith(img);
+        noscript.remove();
       }
     });
   },
