@@ -54,6 +54,16 @@ export class Readability<T = string> {
     /** name of the site */
     siteName: string;
 
+    /**
+     * The ISO date of the article's publication.
+     */
+    date: string;
+
+    /**
+     * Lead image of the article.
+     */
+    image: string;
+
     /** content language */
     lang: string;
   };
